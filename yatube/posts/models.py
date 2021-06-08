@@ -74,15 +74,18 @@ class Follow(models.Model):
         User,
         blank=True,
         null=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name='follower',
         verbose_name='Подписчик',
-        help_text='Тот, кто подписан')
-    author = models.ManyToManyField(
+        help_text='Тот, кто подписался')
+    author = models.ForeignKey(
         User,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
         related_name='following',
         verbose_name='Подписан',
-        help_text='Тот, на кого подписан')
+        help_text='Тот, на кого подписался')
 
     def __str__(self):
-        return f'Подписки {self.user.username}'
+        return f'Подписка {self.user.username}'

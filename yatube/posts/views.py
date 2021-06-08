@@ -32,27 +32,25 @@ def profile_follow(request, username):
     user = request.user
     if user.username == username:
         return redirect('profile', username)
-    if not Follow.objects.filter(user=user):
-        Follow.objects.create(user=user)
-    user_follow = Follow.objects.get(user=user)
     following_author = User.objects.get(username=username)
-    user_follow.author.add(following_author)
+    Follow.objects.get_or_create(user=user,
+                                 author=following_author)
     return redirect('profile', username)
 
 
 @login_required
 def profile_unfollow(request, username):
     user = request.user
-    user_follow = Follow.objects.get(user=user)
     unfollowing_author = User.objects.get(username=username)
-    user_follow.author.remove(unfollowing_author)
+    Follow.objects.get(user=user,
+                       author=unfollowing_author).delete()
     return redirect('profile', username)
 
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    if ((request.user.is_anonymous) or
-       (author not in User.objects.filter(following__user=request.user))):
+    if ((request.user.is_anonymous)
+       or (author not in User.objects.filter(following__user=request.user))):
         following = False
     else:
         following = True
@@ -77,8 +75,8 @@ def group_posts(request, slug):
 def post_view(request, username, post_id):
     post = get_object_or_404(Post, author__username=username, id=post_id)
     author = post.author
-    if ((request.user.is_anonymous) or
-       (author not in User.objects.filter(following__user=request.user))):
+    if ((request.user.is_anonymous)
+       or (author not in User.objects.filter(following__user=request.user))):
         following = False
     else:
         following = True
@@ -139,4 +137,3 @@ def page_not_found(request, exception):
 
 def server_error(request):
     return render(request, "misc/500.html", status=500)
-

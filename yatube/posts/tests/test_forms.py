@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
+
 from posts.forms import PostForm
 from posts.models import Post, User
 
@@ -71,7 +72,7 @@ class PostCreateFormTests(TestCase):
             Post.objects.filter(
                 text='Текст второго тестового поста',
                 author=User.objects.get(username='Dima'),
-                image='media/small.gif'
+                image='posts/small.gif'
             ).exists()
         )
 

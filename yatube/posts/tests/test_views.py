@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
+
 from posts.models import Group, Post, User
 
 
@@ -228,3 +229,88 @@ class PostWithGroupTests(TestCase):
         post = PostWithGroupTests.post
         container = response.context.get('page')
         self.assertIn(post, container)
+
+
+class FollowTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user_1 = User.objects.create_user(
+            username='user1'
+        )
+        cls.user_2 = User.objects.create_user(
+            username='user2'
+        )
+
+    def setUp(self):
+        self.guest_client = Client()
+        self.user_1 = FollowTest.user_1
+        self.user_2 = FollowTest.user_2
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user_1)
+
+    def test_create_and_delete_follow(self):
+        """
+        Авторизованный пользователь может подписываться на других
+        пользователей и удалять их из подписок.
+        """
+        slug_user = FollowTest.user_2.username
+        self.authorized_client.get(reverse(
+            'profile_follow', kwargs={'username': slug_user}))
+        subscribe_user_follow_count = FollowTest.user_1.follower.count()
+        self.assertEqual(subscribe_user_follow_count, 1)
+        self.authorized_client.get(reverse(
+            'profile_unfollow', kwargs={'username': slug_user}))
+        unsubscribe_user_follow_count = FollowTest.user_1.follower.count()
+        self.assertEqual(unsubscribe_user_follow_count, 0)
+
+    def test_post_on_follow_index(self):
+        """
+        Новая запись пользователя появляется в ленте тех, кто на него подписан
+        и не появляется в ленте тех, кто не подписан на него.
+        """
+        slug_user = FollowTest.user_2.username
+        self.authorized_client.get(reverse(
+            'profile_follow', kwargs={'username': slug_user}))
+        post = Post.objects.create(
+            author=FollowTest.user_2,
+            text='Текст поста'
+        )
+        response_1 = self.authorized_client.get(reverse('follow_index'))
+        container_1 = response_1.context.get('page')
+        self.assertIn(post, container_1)
+        self.authorized_client.force_login(self.user_2)
+        response_2 = self.authorized_client.get(reverse('follow_index'))
+        container_2 = response_2.context.get('page')
+        self.assertNotIn(post, container_2)
+
+
+class CommentTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(
+            username='user'
+        )
+        cls.post = Post.objects.create(
+            text='Текст поста',
+            author=cls.user
+        )
+
+    def setUp(self):
+        self.guest_client = Client()
+        self.user = CommentTest.user
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
+
+    def test_anonymous_comment(self):
+        """
+        Анонимный пользователь не может комментировать посты.
+        """
+        post = CommentTest.post
+        response = self.authorized_client.get(reverse(
+            'add_comment', kwargs={'username': post.author,
+                                   'post_id': post.id}))
+        self.assertRedirects(response, reverse(
+            'post', kwargs={'username': post.author,
+                            'post_id': post.id}))

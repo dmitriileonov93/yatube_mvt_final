@@ -4,17 +4,17 @@ import tempfile
 from django import forms
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from posts.models import Group, Post, User
+from posts.models import Comment, Group, Post, User
 
 
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
 class PostsPagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -44,7 +44,7 @@ class PostsPagesTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
-        super().tearDownClass()
+        return super().tearDownClass()
 
     def setUp(self):
         self.guest_client = Client()
@@ -314,3 +314,42 @@ class CommentTest(TestCase):
         self.assertRedirects(response, reverse(
             'post', kwargs={'username': post.author,
                             'post_id': post.id}))
+
+    def test_authorized_comment(self):
+        """
+        Авторизованный пользователь может комментировать посты.
+        """
+        author = CommentTest.user
+        comments_count = Comment.objects.count()
+        post = CommentTest.post
+        form_data = {
+            'text': 'Текст тестового комментария',
+            'author': author,
+            'post': post, }
+        response = self.authorized_client.post(
+            reverse('add_comment', kwargs={'username': post.author,
+                                           'post_id': post.id}),
+            data=form_data,
+            follow=True)
+        new_comment = Comment.objects.first()
+        asserts_equal = {
+            response.status_code: 200,
+            Comment.objects.count(): comments_count + 1,
+            new_comment.text: 'Текст тестового комментария',
+            new_comment.author: author,
+            new_comment.post: post,
+        }
+        for test, result in asserts_equal.items():
+            with self.subTest(test=test):
+                self.assertEqual(test, result)
+        self.assertRedirects(
+            response,
+            reverse('post', kwargs={'username': post.author,
+                                    'post_id': post.id}))
+        self.assertTrue(
+            Comment.objects.filter(
+                text='Текст тестового комментария',
+                author=author,
+                post=post
+            ).exists()
+        )

@@ -30,9 +30,9 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     user = request.user
-    if user.username == username:
+    following_author = get_object_or_404(User, username=username)
+    if request.user == following_author:
         return redirect('profile', username)
-    following_author = User.objects.get(username=username)
     Follow.objects.get_or_create(user=user,
                                  author=following_author)
     return redirect('profile', username)
@@ -41,7 +41,7 @@ def profile_follow(request, username):
 @login_required
 def profile_unfollow(request, username):
     user = request.user
-    unfollowing_author = User.objects.get(username=username)
+    unfollowing_author = get_object_or_404(User, username=username)
     Follow.objects.get(user=user,
                        author=unfollowing_author).delete()
     return redirect('profile', username)
@@ -49,11 +49,9 @@ def profile_unfollow(request, username):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    if ((request.user.is_anonymous)
-       or (author not in User.objects.filter(following__user=request.user))):
-        following = False
-    else:
-        following = True
+    following = ((not request.user.is_anonymous)
+                 and (author in User.objects.filter(
+                      following__user=request.user)))
     post_list = author.posts.all()
     paginator = Paginator(post_list, posts_on_page)
     page_number = request.GET.get('page')
@@ -75,11 +73,9 @@ def group_posts(request, slug):
 def post_view(request, username, post_id):
     post = get_object_or_404(Post, author__username=username, id=post_id)
     author = post.author
-    if ((request.user.is_anonymous)
-       or (author not in User.objects.filter(following__user=request.user))):
-        following = False
-    else:
-        following = True
+    following = ((not request.user.is_anonymous)
+                 and (author in User.objects.filter(
+                      following__user=request.user)))
     comments = post.comments.all()
     form = CommentForm(request.POST or None)
     return render(request, 'post.html', {'author': author,
@@ -99,9 +95,6 @@ def add_comment(request, username, post_id):
         comment.post = post
         comment.save()
     return redirect('post', username, post_id)
-    # return render(request, 'post.html', {'author': post.author,
-    #                                      'post': post,
-    #                                      'form': form})
 
 
 @login_required

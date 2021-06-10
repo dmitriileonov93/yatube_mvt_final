@@ -22,11 +22,8 @@ class PostCreateFormTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        print(settings.MEDIA_ROOT)
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
-        print(settings.MEDIA_ROOT)
         super().tearDownClass()
-        print(settings.MEDIA_ROOT)
 
     def setUp(self):
         self.guest_client = Client()

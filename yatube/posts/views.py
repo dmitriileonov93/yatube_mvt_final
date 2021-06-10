@@ -50,8 +50,10 @@ def profile_unfollow(request, username):
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     following = ((not request.user.is_anonymous)
-                 and (author in User.objects.filter(
-                      following__user=request.user)))
+                 and (Follow.objects.filter(
+                     user=request.user,
+                     author=author
+                 ).exists()))
     post_list = author.posts.all()
     paginator = Paginator(post_list, posts_on_page)
     page_number = request.GET.get('page')
@@ -74,8 +76,10 @@ def post_view(request, username, post_id):
     post = get_object_or_404(Post, author__username=username, id=post_id)
     author = post.author
     following = ((not request.user.is_anonymous)
-                 and (author in User.objects.filter(
-                      following__user=request.user)))
+                 and (Follow.objects.filter(
+                     user=request.user,
+                     author=author
+                 ).exists()))
     comments = post.comments.all()
     form = CommentForm(request.POST or None)
     return render(request, 'post.html', {'author': author,

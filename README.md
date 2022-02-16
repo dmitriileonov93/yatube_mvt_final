@@ -12,11 +12,11 @@ Python 3.7, Django 2.2, SQLite3.
 ### Запуск проекта
 - Для загрузки введите в командную строку:
 ```
-git clone https://github.com/dmitriileonov93/hw05_final.git
+git clone https://github.com/dmitriileonov93/yatube_mvt_final.git
 ```
 - В корневой папке проекта создайте виртуальное окружение и активируйте его:
 ```
-cd hw05_final/
+cd yatube_mvt_final/
 python3 -m venv venv
 source venv/bin/activate  # для macOS/linux
 source venv/Scripts/activate  # для Windows
@@ -26,7 +26,7 @@ source venv/Scripts/activate  # для Windows
 python3 -m pip install --upgrade pip
 pip3 install -r requirements.txt
 ```
-- Создайте файл .env для переменных окружения в папке:
+- Создайте файл .env для переменных окружения в папке yatube/yatube/:
 ```
 touch yatube/yatube/.env
 ```
@@ -47,7 +47,7 @@ python3 manage.py migrate
 ```
 python3 manage.py createsuperuser
 ```
-- Запуск приложения из дериктории "hw05_final/yatube":
+- Запуск приложения из дериктории "yatube_mvt_final/yatube":
 ```
 python3 manage.py runserver
 ```

@@ -13,10 +13,12 @@ Python 3.7, Django 2.2, SQLite3
 ```
 git clone https://github.com/dmitriileonov93/hw05_final.git
 ```
-- В корневой папке проекта создайте виртуальное окружение:
+- В корневой папке проекта создайте виртуальное окружение и активируйте его:
 ```
 cd hw05_final/
 python3 -m venv venv
+source venv/bin/activate  # для macOS/linux
+source venv/Scripts/activate  # для Windows
 ```
 - Установите зависимости:
 ```
